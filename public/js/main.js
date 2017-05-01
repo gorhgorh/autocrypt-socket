@@ -1,6 +1,7 @@
 /* global io */
-console.log('client v0.0.3')
+console.log('client v0.0.4')
 var isConnected = false
+var userMsgs
 var socket = io('http://localhost:8090')
 // dom refs
 // var form = document.getElementById('sendForm')
@@ -24,15 +25,22 @@ function clientConnect () {
   var uName = userNameFld.value
   if (uName === '') return console.log('uname should not be empty')
 
-  socket.on('connect', function () {
-    isConnected = true
-    console.log('connected as', socket.id)
-  })
+
+  isConnected = true
+  console.log('connected as', socket.id)
+  socket.emit('mailUser', uName)
+
   socket.emit('user', {id: socket.id, userName: uName})
-  userNameBt.disabled = true
+  // userNameBt.disabled = true
+
   socket.on('clients', function (data) {
     console.log('clientList', data)
     console.log('currentClient', socket.id)
+  })
+
+  socket.on('userMessages', function (data) {
+    userMsgs = data
+    displayMessages(data)
   })
 }
 
@@ -48,4 +56,8 @@ function sendMessage (e) {
   console.log(msg)
   toFld.value = ''
   msgFld.value = ''
+}
+
+function displayMessages (msgs) {
+  console.log(msgs)
 }

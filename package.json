@@ -10,7 +10,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "async": "^2.4.0",
     "debug": "^2.6.6",
+    "fs-extra": "^3.0.0",
     "node-static": "^0.7.9",
     "socket.io": "^1.7.3"
   },
