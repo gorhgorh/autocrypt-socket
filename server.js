@@ -4,82 +4,91 @@ var nstatic = require('node-static')
 var debug = require('debug')('autocrypt:server')
 var app = require('http').createServer(handler)
 var io = require('socket.io')(app)
+var ip = require('ip')
 
 // / serve public folder on port 8090
 var file = new nstatic.Server('./public')
-var clientsList = {}
-app.listen(8090)
+var clients = {} // all CONNECTED clients socket
+var port = 8090
+app.listen(port)
+console.log('autocrypt demo v0.0.0server is runnig http://' + ip.address() + ':' + port)
 
 // serve static files in the public dir
 function handler (req, res) {
   req.addListener('end', function () {
-    console.log('page called')
     file.serve(req, res)
   }).resume()
 }
 
 // / web socket
 io.on('connection', function (socket) {
-  var usrMessage = []
   var currUser
+  var usrMessages = []
+  debug('user connects', socket.id)
 
-  debug('someone connect', socket.id)
-
+  // client send a username
   socket.on('user', function (user) {
-    debug('user event', user)
-
-    var client = {id: socket.id, userName: user.userName}
-    addClient(client, clientsList)
-    currUser = client.userName
+    debug('user ', socket.id, ' name:', user.userName)
+    socket.join(user.userName) // connect to the users 'room'
+    clients[user.userName].socket = socket // make a ref of each client socket
+    currUser = user.userName
   })
 
+  // client request mailArchive
   socket.on('mailUser', function (user) {
-    debug('mailUser event', user)
-    socket.join(user)
+    debug(user, 'request server\'s mails')
     fs.readJson(pth.join(__dirname, 'msgs', user + '.json'), (err, msgs) => {
       if (err) {
         // if file does not exists
         if (err.errno === -2) {
-          // create a default
+          // create a default message
+          var msgsArr = [{
+            from: 'mailserver',
+            to: user,
+            subject: 'init mail',
+            msg: 'welcome',
+            time: 1493630161845
+          }]
+          usrMessages = msgsArr
           writeMsgs(user, msgsArr)
-          usrMessage = msgsArr
-          io.sockets.in(user).emit('message', msgsArr)
+          io.sockets.in(user).emit('userArchive', msgsArr)
         // log other error types
         } else return debug(err)
       } else {
-        usrMessage = msgs
-        io.sockets.in(user).emit('userArchive', usrMessage)
+        usrMessages = msgs
+        debug(msgs)
+        io.sockets.in(user).emit('userArchive', usrMessages)
       }
     })
   })
 
-  // on new client broadcast the client list
-  socket.emit('clientsList', clientsList)
+  socket.on('sendEmail', function (message) {
+    debug(currUser === message.from)
+    if (currUser !== message.from) return debug('invalid recipient', currUser, message.from)
+    usrMessages.push(message)
+    writeMsgs(currUser, usrMessages)
+    io.sockets.in(currUser).emit('userArchive', usrMessages)
+    // debug(usrMessages)
+  })
+
+  // on new client broadcast the connected recipents list
+  socket.emit('clientsList', clients.keys)
 
   socket.on('disconnect', function () {
     debug('client', socket.id, currUser, 'parted')
+    debug(clients)
     if (currUser !== undefined) {
-      clientsList[currUser].id = ''
-      debug('clear id', clientsList)
+      delete clients[currUser].socket
     }
   })
 })
 
-function addClient (client, clients) {
-  clients[client.userName] = {id: client.id}
-  debug(clients)
-}
-
-var msgsArr = [{
-  from: 'mailserver',
-  to: '',
-  msg: 'this is a test message, yarrrr',
-  time: 1493630161845
-}]
-
 function writeMsgs (user, msgs) {
-  fs.writeJson(pth.join(__dirname, 'msgs', user + '.json'), msgs, err => {
+  debug('write JSON msgs for ', user)
+  clients[user].msgs = msgs
+  var fPath = pth.join(__dirname, 'msgs', user + '.json')
+  fs.outputJson(fPath, msgs, err => {
     if (err) return console.error(err)
-    debug('msgs written')
+    debug('msgs written:', fPath)
   })
 }

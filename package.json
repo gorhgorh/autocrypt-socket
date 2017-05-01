@@ -1,18 +1,21 @@
 {
-  "name": "autocryptSocket",
-  "version": "1.0.0",
+  "name": "autocrypt-socket",
+  "version": "0.0.1",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "clean": "rm msgs/*",
+    "start": "export DEBUG=-auto* &&node server.js",
+    "watch": "export DEBUG=auto* && nodemon server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "async": "^2.4.0",
     "debug": "^2.6.6",
     "fs-extra": "^3.0.0",
+    "ip": "^1.1.5",
     "node-static": "^0.7.9",
     "socket.io": "^1.7.3"
   },
@@ -22,6 +25,7 @@
     "eslint-plugin-import": "^2.2.0",
     "eslint-plugin-node": "^4.2.2",
     "eslint-plugin-promise": "^3.5.0",
-    "eslint-plugin-standard": "^3.0.1"
+    "eslint-plugin-standard": "^3.0.1",
+    "nodemon": "^1.11.0"
   }
 }
