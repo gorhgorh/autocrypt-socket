@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+<div id="page1">
+    please enter your name <br>
+    <label for="to">username
+        <input type="text" name="userName" id="userName" value='test'>
+    </label>
+
+    <button id='sendUserName'>Send</button>
+    <button id="changeUser" disabled>changeUser</button>
+</div>
+<div id="page2">
+    <form action="" id="sendForm">
+        <div>
+            <label for="to">to
+                <input type="text" name="to" id="to">
+            </label>
+        </div>
+
+        <label for="subject">subject
+            <input type="text" name="subject">
+        </label>
+
+        <textarea cols="30" rows="10" id="message"></textarea>
+        <button id='sendMessage'>Send</button>
+    </form>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
