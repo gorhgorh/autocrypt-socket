@@ -18,7 +18,8 @@ you have to send a username to send messages
 this client is here to test the server, and will be merged with the current ui
 
 ## to do
-- implement replication of message to the recipent
+- [x]implement replication of message to the recipent
 - write tests
 - merge with current ui
 - stats
+- switch from static json files to levelDb

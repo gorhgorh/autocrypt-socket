@@ -30,6 +30,7 @@ io.on('connection', function (socket) {
   socket.on('user', function (user) {
     debug('user ', socket.id, ' name:', user.userName)
     socket.join(user.userName) // connect to the users 'room'
+    clients[user.userName] = {}
     clients[user.userName].socket = socket // make a ref of each client socket
     currUser = user.userName
   })
@@ -67,6 +68,7 @@ io.on('connection', function (socket) {
     if (currUser !== message.from) return debug('invalid recipient', currUser, message.from)
     usrMessages.push(message)
     writeMsgs(currUser, usrMessages)
+    sendToRecipient(message.to, message)
     io.sockets.in(currUser).emit('userArchive', usrMessages)
     // debug(usrMessages)
   })
@@ -85,10 +87,31 @@ io.on('connection', function (socket) {
 
 function writeMsgs (user, msgs) {
   debug('write JSON msgs for ', user)
+  if(!clients[user]) clients[user] = {}
   clients[user].msgs = msgs
   var fPath = pth.join(__dirname, 'msgs', user + '.json')
   fs.outputJson(fPath, msgs, err => {
     if (err) return console.error(err)
     debug('msgs written:', fPath)
+  })
+}
+
+function sendToRecipient(rcpt, msg) {
+  fs.readJson(pth.join(__dirname, 'msgs', rcpt + '.json'), (err, msgs) => {
+    if (err) {
+      // if file does not exists
+      if (err.errno === -2) {
+        // create a default message
+        var msgsArr = [msg]
+        writeMsgs(rcpt, msgsArr)
+        // io.sockets.in(rcpt).emit('userArchive', msgsArr)
+      // log other error types
+      } else return debug(err)
+    } else {
+      debug(msgs)
+      msgs.push(msg)
+      writeMsgs(rcpt, msgs)
+      io.sockets.in(rcpt).emit('userArchive', msgs)
+    }
   })
 }
